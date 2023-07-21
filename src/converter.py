@@ -30,10 +30,10 @@ class Converter:
             pipeline.set_pipe_mode(mode)
         pipeline.setup_pipe()
         pipeline.run()
-        os.remove(f"{os.getcwd()}\\{self.in_f}\\{filename}")
+        os.remove(f"{self.in_f}/{filename}")
         self.clear_folder(self.buf_f)
         self.counter += 1
-        return f"{os.getcwd()}\\{self.out_f}\\{out_filename(self.counter - 1)}"
+        return f"{self.out_f}/{out_filename(self.counter - 1)}"
     
     def clear_folder(self, folder):
         for file in os.listdir(folder):
@@ -77,7 +77,7 @@ class ProcessPipeline:
 
         self.pipe.append(mp4_to_webm(
             self.last_filename(),
-            f"{os.getcwd()}\\{self.out_f}\\{out_filename(self.index)}"
+            f"{self.out_f}/{out_filename(self.index)}"
         )) # convert and create a final file
     
     def run(self):
@@ -86,12 +86,12 @@ class ProcessPipeline:
 
     def last_filename(self):
         if self.step == 0:
-            return f"{os.getcwd()}\\{self.in_f}\\{self.filename}"
-        return f"{os.getcwd()}\\{self.buf_f}\\{buf_filename(self.index, self.step)}"
+            return f"{self.in_f}/{self.filename}"
+        return f"{self.buf_f}/{buf_filename(self.index, self.step)}"
     
     def next_filename(self):
         self.step += 1
-        return f"{os.getcwd()}\\{self.buf_f}\\{buf_filename(self.index, self.step)}"
+        return f"{self.buf_f}/{buf_filename(self.index, self.step)}"
 
     def pipe_crop(self, v_length, v_res):
         pipeline = []

@@ -81,7 +81,7 @@ async def receive_vid(message):
         return
     
     downloaded_file = await bot.download_file(info.file_path)
-    target_path = f"{os.getcwd()}\\{global_data.in_f}\\in-{global_data.converter.counter}.mp4"
+    target_path = f"{global_data.in_f}/in-{global_data.converter.counter}.mp4"
 
     with open(target_path, "wb") as f:
         f.write(downloaded_file)
@@ -103,6 +103,10 @@ async def polling():
 
 def run():
     global global_data
+
+    if TOKEN in [None, ""]:
+        raise ValueError("Token is not set up")
+    
     global_data = GlobalData("in", "buf", "out")
     global_data.loop = asyncio.get_event_loop()
     global_data.loop.create_task(polling())
