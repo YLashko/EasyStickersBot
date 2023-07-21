@@ -1,11 +1,17 @@
 import subprocess
 import time
+from config import OS_TYPE
 
 def run_command(command: list[str], record_time = False) -> None:
     try:
         if record_time:
             a = time.time()
-        p = subprocess.run(" ".join(command), check=True, capture_output=True, text=True, shell=True)
+
+        command_str = " ".join(command)
+        if OS_TYPE == "linux":
+            command_str = command_str.replace("\\", "/")
+        p = subprocess.run(command_str, check=True, capture_output=True, text=True, shell=True)
+
         if record_time:
             print(f"Done! In {round(time.time() - a, 4)} seconds")
         return p.stdout

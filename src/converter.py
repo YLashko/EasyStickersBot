@@ -1,5 +1,8 @@
 import os
 from src.convert_tools import *
+from pathlib import Path
+
+from src.util import os_path
 
 buf_filename = lambda counter, step: f"buf-{counter}-{step}.mp4"
 out_filename = lambda counter: f"out-{counter}.webm"
@@ -30,14 +33,14 @@ class Converter:
             pipeline.set_pipe_mode(mode)
         pipeline.setup_pipe()
         pipeline.run()
-        os.remove(f"{self.in_f}/{filename}")
+        os.remove(os_path(f"{self.in_f}/{filename}"))
         self.clear_folder(self.buf_f)
         self.counter += 1
-        return f"{self.out_f}/{out_filename(self.counter - 1)}"
+        return os_path(f"{self.out_f}/{out_filename(self.counter - 1)}")
     
     def clear_folder(self, folder):
         for file in os.listdir(folder):
-            os.remove(f"{folder}/{file}")
+            os.remove(os_path(f"{folder}/{file}"))
     
 class ProcessPipeline:
     def __init__(self, filename, index, in_f="", buf_f="", out_f="") -> None:
@@ -86,12 +89,12 @@ class ProcessPipeline:
 
     def last_filename(self):
         if self.step == 0:
-            return f"{self.in_f}/{self.filename}"
-        return f"{self.buf_f}/{buf_filename(self.index, self.step)}"
+            return os_path(f"{self.in_f}/{self.filename}")
+        return os_path(f"{self.buf_f}/{buf_filename(self.index, self.step)}")
     
     def next_filename(self):
         self.step += 1
-        return f"{self.buf_f}/{buf_filename(self.index, self.step)}"
+        return os_path(f"{self.buf_f}/{buf_filename(self.index, self.step)}")
 
     def pipe_crop(self, v_length, v_res):
         pipeline = []

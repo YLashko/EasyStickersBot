@@ -3,10 +3,17 @@ from telebot.async_telebot import AsyncTeleBot
 from src.converter import Converter, PipeModes
 import asyncio
 import aiohttp
+from pathlib import Path
 import os
 from config import ADMIN, FILE_SIZE_LIMIT, HELP_MESSAGE, SUPPORTED_FORMATS, TOKEN, UPDATE_INTERVAL
+from src.util import os_path
 
 bot = AsyncTeleBot(TOKEN)
+
+def first_nonnone(iterable):
+    for i in iterable:
+        if i is not None:
+            return i
 
 def format_from_filename(filename: str) -> str:
     return filename.split(".")[-1]
@@ -68,11 +75,12 @@ async def mode_crop(message):
 async def receive_vid(message):
     global global_data
     user = message.from_user
-    doc = message.video if message.video is not None else message.animation
+    doc = first_nonnone([message.video, message.animation, message.document])
+    print(doc)
     filename = doc.file_name
     info = await bot.get_file(doc.file_id)
 
-    if format_from_filename(filename) not in SUPPORTED_FORMATS:
+    if doc.mime_type not in SUPPORTED_FORMATS:
         await bot.send_message(user.id, "Format not supported")
         return
     
@@ -81,7 +89,7 @@ async def receive_vid(message):
         return
     
     downloaded_file = await bot.download_file(info.file_path)
-    target_path = f"{global_data.in_f}/in-{global_data.converter.counter}.mp4"
+    target_path = os_path(f"{global_data.in_f}/in-{global_data.converter.counter}.mp4")
 
     with open(target_path, "wb") as f:
         f.write(downloaded_file)
