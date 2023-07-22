@@ -5,18 +5,11 @@ import asyncio
 import aiohttp
 from pathlib import Path
 import os
+from src.image_converter import process_image_document
 from config import ADMIN, FILE_SIZE_LIMIT, HELP_MESSAGE, SUPPORTED_FORMATS, TOKEN, UPDATE_INTERVAL
-from src.util import os_path
+from src.util import os_path, first_nonnone, format_from_filename
 
 bot = AsyncTeleBot(TOKEN)
-
-def first_nonnone(iterable):
-    for i in iterable:
-        if i is not None:
-            return i
-
-def format_from_filename(filename: str) -> str:
-    return filename.split(".")[-1]
 
 class GlobalData:
     def __init__(self, in_f, buf_f, out_f):
@@ -37,12 +30,14 @@ class GlobalData:
         res_filename = self.converter.create_and_run_pipe(filename, self.user_modes[uid])
         return res_filename
 
+
 @bot.message_handler(commands=["start", "help"])
 async def help(message):
     await bot.send_message(
         message.from_user.id, 
         HELP_MESSAGE
     )
+
 
 @bot.message_handler(commands=["stop"])
 async def stop(message):
@@ -53,11 +48,13 @@ async def stop(message):
         await bot.close_session()
         return
 
+
 @bot.message_handler(commands=["cr"])
 async def mode_crop(message):
     global global_data
     global_data.set_user_mode(message.from_user.id, PipeModes.Crop)
     await bot.send_message(message.from_user.id, "Convert mode set to Crop!")
+
 
 @bot.message_handler(commands=["crsp"])
 async def mode_crop(message):
@@ -65,18 +62,44 @@ async def mode_crop(message):
     global_data.set_user_mode(message.from_user.id, PipeModes.CropAndSpeedup)
     await bot.send_message(message.from_user.id, "Convert mode set to Crop + Speedup!")
 
+
 @bot.message_handler(commands=["sp"])
 async def mode_crop(message):
     global global_data
     global_data.set_user_mode(message.from_user.id, PipeModes.Speedup)
     await bot.send_message(message.from_user.id, "Convert mode set to Speedup!")
 
+
+@bot.message_handler(content_types=["photo", "document"])
+async def receive_photo(message):
+    global global_data
+    user = message.from_user
+    doc = first_nonnone([message.photo, message.document]) # there are many copies sent at the same time, -1 to pick the highest resolution
+    
+    if message.photo is not None:
+        doc = doc[-1]
+    
+    if message.document is not None:
+        if doc.mime_type not in SUPPORTED_FORMATS:
+            await bot.send_message(user.id, "Format not supported")
+            return
+    
+    if doc.file_size > FILE_SIZE_LIMIT:
+        await bot.send_message(user.id, "File exceeds the size limit")
+        return
+
+    info = await bot.get_file(doc.file_id)
+    downloaded_file = await bot.download_file(info.file_path)
+    
+    result_io = process_image_document(downloaded_file)
+    await bot.send_document(user.id, result_io)
+
+
 @bot.message_handler(content_types=["video", "animation"])
 async def receive_vid(message):
     global global_data
     user = message.from_user
     doc = first_nonnone([message.video, message.animation, message.document])
-    print(doc)
     filename = doc.file_name
     info = await bot.get_file(doc.file_id)
 
@@ -101,6 +124,7 @@ async def receive_vid(message):
     await bot.send_animation(user.id, open(result_path, "rb"))
     os.remove(result_path)
 
+
 async def polling():
     global global_data
     while global_data.running:
@@ -108,6 +132,7 @@ async def polling():
             await bot.polling(non_stop=True, interval=UPDATE_INTERVAL)
         except Exception as e:
             print(f"Exception in polling: {e}")
+
 
 def run():
     global global_data
@@ -119,6 +144,7 @@ def run():
     global_data.loop = asyncio.get_event_loop()
     global_data.loop.create_task(polling())
     global_data.loop.run_forever()
+
 
 if __name__ == "__main__":
     run()

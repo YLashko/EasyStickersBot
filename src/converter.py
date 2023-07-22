@@ -2,7 +2,7 @@ import os
 from src.convert_tools import *
 from pathlib import Path
 
-from src.util import os_path
+from src.util import os_path, get_desired_resolution
 
 buf_filename = lambda counter, step: f"buf-{counter}-{step}.mp4"
 out_filename = lambda counter: f"out-{counter}.webm"
@@ -56,15 +56,6 @@ class ProcessPipeline:
     def set_pipe_mode(self, mode):
         self.mode = mode
     
-    def get_desired_resolution(self, res):
-        max_res = max(res)
-        rate = 512 / max_res
-        x = int(res[0] * rate)
-        y = int(res[1] * rate)
-        x -= x % 2
-        y -= y % 2
-        return [x, y]
-    
     def setup_pipe(self):
         v_length = float(run_command(video_length(self.last_filename())).replace("\n", "")) # video length in seconds
         v_res = get_resolution_from_str(run_command(video_resolution(self.last_filename()))) # video resolution
@@ -104,7 +95,7 @@ class ProcessPipeline:
         pipeline.append(resize_video(
             self.last_filename(), 
             self.next_filename(), 
-            self.get_desired_resolution(v_res)
+            get_desired_resolution(v_res)
         ))
         return pipeline
 
@@ -117,7 +108,7 @@ class ProcessPipeline:
         pipeline.append(resize_video(
             self.last_filename(), 
             self.next_filename(), 
-            self.get_desired_resolution(v_res)
+            get_desired_resolution(v_res)
         ))
         if v_length > 3:
             pipeline.append(speedup(self.last_filename(), self.next_filename(), v_length / 3 + 0.1))
@@ -133,7 +124,7 @@ class ProcessPipeline:
         pipeline.append(resize_video(
             self.last_filename(), 
             self.next_filename(), 
-            self.get_desired_resolution(v_res)
+            get_desired_resolution(v_res)
         ))
         if v_length > 3:
             pipeline.append(speedup(self.last_filename(), self.next_filename(), v_length / 3 + 0.1))
