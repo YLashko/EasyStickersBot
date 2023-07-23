@@ -7,5 +7,5 @@ COPY . .
 RUN pip install -r requirements.txt
 RUN apk add ffmpeg
 
-CMD ["python", "-m", "src.main"]
+CMD ["python", "-m", "src.run"]
 

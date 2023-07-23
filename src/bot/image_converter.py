@@ -1,5 +1,5 @@
 from PIL import Image
-from src.util import get_desired_resolution
+from src.bot.util import get_desired_resolution
 import io
 
 def process_image_document(image: bytes) -> io.BytesIO:

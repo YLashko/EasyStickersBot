@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logger</title>
+    <style>
+        p {
+            font-size: 24px;
+            padding: 0px;
+            margin: 2px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hello! This is a server created for debugging EasyStickers bot.</h1>
+    {% for log in logs %}
+        <p>{{ log[0] }}</p>
+    {% endfor %}
+</body>
+</html>

@@ -1,8 +1,9 @@
 import os
-from src.convert_tools import *
+from src.bot.convert_tools import *
+from time import time
+from src.bot.logger import Logger
 from pathlib import Path
-
-from src.util import os_path, get_desired_resolution
+from src.bot.util import os_path, get_desired_resolution
 
 buf_filename = lambda counter, step: f"buf-{counter}-{step}.mp4"
 out_filename = lambda counter: f"out-{counter}.webm"
@@ -18,9 +19,10 @@ class PipeModes:
     modes_list = [0, 1, 2]
 
 class Converter:
-    def __init__(self, in_folder, buf_folder, out_folder):
+    def __init__(self, in_folder, buf_folder, out_folder, logger=None):
         self.to_process = []
         self.counter = 0
+        self.logger: Logger = logger
         self.in_f = in_folder
         self.buf_f = buf_folder
         self.out_f = out_folder
