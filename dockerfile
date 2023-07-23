@@ -4,6 +4,7 @@ WORKDIR /app
 
 COPY . .
 
+RUN apk add musl-dev gcc libffi-dev
 RUN pip install -r requirements.txt
 RUN apk add ffmpeg
 
