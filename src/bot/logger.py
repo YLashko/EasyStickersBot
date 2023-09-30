@@ -4,7 +4,7 @@ from src.bot.queries import *
 class Logger:
     formatters = {
         "video_convert": lambda telegram_nickname, file_size, time: f"a video for @{telegram_nickname} with a size of {round(file_size / 1024, 4)}KB converted. time taken - {round(time, 4)}s",
-        "photo_convert": lambda telegram_nickname, photo_res, photo_size, time: f"a photo for @{telegram_nickname} with a resolution of {photo_res[0]}x{photo_res[1]} and a size of {round(photo_size / 1024, 4)}KB converted. time taken - {round(time, 4)}",
+        "photo_convert": lambda telegram_nickname, photo_res, photo_size, time: f"a photo for @{telegram_nickname} with a resolution of {photo_res[0]}x{photo_res[1]} and a size of {round(photo_size / 1024, 4)}KB converted. time taken - {round(time, 4)}s",
         "error": lambda where, exception_content: f"an exception in {where} occured: {exception_content}",
         "request_submit": lambda telegram_nickname, request_type, info: f"a request for @{telegram_nickname} submitted, type: {request_type}, file info: {info}",
         "help": lambda telegram_nickname: f"@{telegram_nickname} asked for help or started using the bot",
@@ -25,18 +25,20 @@ class Logger:
         record = ""
         if self.show_time:
             record = datetime.now().strftime("%d/%m/%Y, %H:%M:%S - ")
-        record += Logger.formatters[record_type](*args, **kwargs)
+        record += Logger.formatters[record_type](*args)
+
+        filepath = kwargs["filepath"] if kwargs.keys().__contains__("filepath") else ""
 
         if self.database is not None:
-            self.log_to_database(record)
+            self.log_to_database(record, filepath)
         else:
-            self.log_to_list(record)
+            self.log_to_list(record, filepath)
 
-    def log_to_database(self, text):
-        self.database.execute(make_record(text))
+    def log_to_database(self, text, filepath):
+        self.database.execute(make_record(text, filepath))
     
-    def log_to_list(self, text):
-        self.logs.append(text)
+    def log_to_list(self, text, filepath):
+        self.logs.append([text, filepath])
 
         if len(self.logs) > self.max_length:
             self.logs.pop(0)

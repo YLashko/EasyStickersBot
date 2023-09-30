@@ -35,7 +35,7 @@ def mp4_to_webm(input, output):
 
 def trim_to_seconds(input, output, s=9):
     s = max(min(s, 59), 1)                          # cut seconds to 1 <= s <= 59
-    s_str = "" if s >= 10 else "0" + str(float(s))    # append 0 if necessary
+    s_str = str(s) if s >= 10 else "0" + str(float(s))    # append 0 if necessary
     return [
         "ffmpeg",
         "-ss", f"00:00:00",

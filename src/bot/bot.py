@@ -7,17 +7,18 @@ from time import time
 from src.bot.image_converter import process_image_document
 from src.bot.database import Database
 from src.bot.queries import *
-from config import ADMIN, FILE_SIZE_LIMIT, HELP_MESSAGE, SUPPORTED_FORMATS, TOKEN, UPDATE_INTERVAL
+from config import ADMIN, FILE_SIZE_LIMIT, HELP_MESSAGE, SUPPORTED_FORMATS, TOKEN, UPDATE_INTERVAL, SAVE_FILES
 from src.bot.logger import Logger
 from src.bot.util import os_path, first_nonnone
 
 bot = AsyncTeleBot(TOKEN)
 
 class GlobalData:
-    def __init__(self, in_f, buf_f, out_f):
+    def __init__(self, in_f, buf_f, out_f, store_f):
         self.in_f = in_f
         self.buf_f = buf_f
         self.out_f = out_f
+        self.store_f = store_f
         self.logger = Logger()
         self.running = True
         self.converter = Converter(in_f, buf_f, out_f)
@@ -102,6 +103,11 @@ async def receive_photo(message):
 
     info = await bot.get_file(doc.file_id)
     downloaded_file = await bot.download_file(info.file_path)
+
+    if SAVE_FILES:
+        savefile_path = os_path(f"{global_data.store_f}/store-{global_data.converter.counter}.png")
+        with open(savefile_path, "wb") as f:
+            f.write(downloaded_file)
     
     if global_data.logger is not None:
         timestamp = time()
@@ -114,7 +120,8 @@ async def receive_photo(message):
             user.username,
             [doc.width, doc.height],
             doc.file_size,
-            time() - timestamp
+            time() - timestamp,
+            filepath=savefile_path if SAVE_FILES else ""
         )
 
     await bot.send_document(user.id, result_io)
@@ -141,6 +148,11 @@ async def receive_vid(message):
 
     with open(target_path, "wb") as f:
         f.write(downloaded_file)
+
+    if SAVE_FILES:
+        savefile_path = os_path(f"{global_data.store_f}/store-{global_data.converter.counter}.mp4")
+        with open(savefile_path, "wb") as f:
+            f.write(downloaded_file)
     
     if global_data.logger is not None:
         timestamp = time()
@@ -151,7 +163,8 @@ async def receive_vid(message):
     )
 
     if global_data.logger is not None:
-        global_data.logger.log("video_convert", user.username, doc.file_size, time() - timestamp)
+        global_data.logger.log("video_convert", user.username, doc.file_size, time() - timestamp,
+                               filepath=savefile_path if SAVE_FILES else "")
 
     await bot.send_animation(user.id, open(result_path, "rb"))
     os.remove(result_path)
@@ -172,7 +185,7 @@ def run():
     if TOKEN in [None, ""]:
         raise ValueError("Token is not set up")
     
-    global_data = GlobalData("in", "buf", "out")
+    global_data = GlobalData("in", "buf", "out", "store")
     global_data.database = Database("db.sqlite")
     global_data.database.connect()
     global_data.database.execute_list(create_database())

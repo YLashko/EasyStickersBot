@@ -1,5 +1,6 @@
 import multiprocessing
 import subprocess
+from dotenv import load_dotenv
 
 
 bot_process = multiprocessing.Process(
@@ -19,5 +20,6 @@ flask_process = multiprocessing.Process(
 
 
 if __name__ == '__main__':
+    load_dotenv()
     flask_process.start()
     bot_process.start()

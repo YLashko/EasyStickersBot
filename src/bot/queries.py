@@ -6,12 +6,13 @@ def create_database():
         """
         CREATE TABLE IF NOT EXISTS record (
             id integer primary key autoincrement,
-            contents text not null
+            contents text not null,
+            filepath text not null
         )
         """
     ]
 
-def make_record(text):
+def make_record(text, filepath):
     return f"""
-        INSERT INTO record (contents) VALUES ('{text}');
+        INSERT INTO record (contents, filepath) VALUES ('{text}', '{filepath}');
     """

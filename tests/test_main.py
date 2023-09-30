@@ -1,6 +1,6 @@
-from src.converter import Converter, ProcessPipeline, PipeModes
-from src.util import get_desired_resolution, first_nonnone, format_from_filename
-from src.image_converter import process_image_document
+from src.bot.converter import Converter, ProcessPipeline, PipeModes
+from src.bot.util import get_desired_resolution, first_nonnone, format_from_filename
+from src.bot.image_converter import process_image_document
 import pytest
 import os
 import shutil

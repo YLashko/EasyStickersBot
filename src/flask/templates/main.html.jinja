@@ -15,7 +15,7 @@
 <body>
     <h1>Hello! This is a server created for debugging EasyStickers bot.</h1>
     {% for log in logs %}
-        <p>{{ log[0] }}</p>
+        <p><span>{{ log[0] }}, </span> {% if log[1] != "" %} <a href="{{ log[1] }}">Download</a> {% endif %} </p>
     {% endfor %}
 </body>
 </html>
