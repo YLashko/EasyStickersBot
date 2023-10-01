@@ -92,7 +92,7 @@ class ProcessPipeline:
     def pipe_crop(self, v_length, v_res):
         pipeline = []
         if v_length >= 3:
-            pipeline.append(trim_to_seconds(self.last_filename(), self.next_filename(), 2.9))
+            pipeline.append(trim_to_seconds(self.last_filename(), self.next_filename(), 2.8))
             print(f"Trimming video from {v_length} to {3} seconds")
         pipeline.append(resize_video(
             self.last_filename(), 
@@ -104,7 +104,7 @@ class ProcessPipeline:
     def pipe_crop_speedup(self, v_length, v_res):
         pipeline = []
         if v_length > 9:
-            pipeline.append(trim_to_seconds(self.last_filename(), self.next_filename(), 8.9))
+            pipeline.append(trim_to_seconds(self.last_filename(), self.next_filename(), 9))
             print(f"Trimming video from {v_length} to {9} seconds")
             v_length = 9
         pipeline.append(resize_video(
@@ -113,7 +113,7 @@ class ProcessPipeline:
             get_desired_resolution(v_res)
         ))
         if v_length > 3:
-            pipeline.append(speedup(self.last_filename(), self.next_filename(), v_length / 3 + 0.2))
+            pipeline.append(speedup(self.last_filename(), self.next_filename(), v_length / 2.8))
             print(f"Speeding up video from {v_length} to {3} seconds")
         return pipeline
     
@@ -129,5 +129,5 @@ class ProcessPipeline:
             get_desired_resolution(v_res)
         ))
         if v_length > 3:
-            pipeline.append(speedup(self.last_filename(), self.next_filename(), v_length / 3 + 0.2))
+            pipeline.append(speedup(self.last_filename(), self.next_filename(), v_length / 2.8))
         return pipeline

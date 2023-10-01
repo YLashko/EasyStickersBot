@@ -45,7 +45,7 @@ def trim_to_seconds(input, output, s=9):
         output
     ]
 
-def speedup(input, output, speedup_rate: 3):
+def speedup(input, output, speedup_rate=3):
     return [
         "ffmpeg",
         "-i", input, 

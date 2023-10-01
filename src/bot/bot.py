@@ -123,6 +123,7 @@ async def receive_photo(message):
             time() - timestamp,
             filepath=savefile_path if SAVE_FILES else ""
         )
+        global_data.converter.counter += 1
 
     await bot.send_document(user.id, result_io)
 
