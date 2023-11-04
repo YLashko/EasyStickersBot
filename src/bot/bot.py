@@ -23,6 +23,7 @@ class GlobalData:
         self.running = True
         self.converter = Converter(in_f, buf_f, out_f)
         self.user_modes = defaultdict(lambda: PipeModes.Crop)
+        self.user_transparent = defaultdict(lambda: False)
 
     def set_user_mode(self, uid: str | int, mode: int) -> None:
         if not mode in PipeModes.modes_list:
@@ -48,6 +49,13 @@ async def stop(message):
     global global_data
     if str(message.from_user.id) == ADMIN:
         ...
+
+@bot.message_handler(commands=["bg"])
+async def toggle_background(message):
+    global global_data
+    uid = message.from_user.id
+    global_data.user_transparent[uid] = not global_data.user_transparent[uid]
+    await bot.send_message(uid, "Toggled background removal to " + ("ON" if global_data.user_transparent[uid] else "OFF"))
 
 
 @bot.message_handler(commands=["cr"])
@@ -112,7 +120,7 @@ async def receive_photo(message):
     if global_data.logger is not None:
         timestamp = time()
 
-    result_io = process_image_document(downloaded_file)
+    result_io = process_image_document(downloaded_file, global_data.user_transparent[user.id])
 
     if global_data.logger is not None:
         global_data.logger.log(
@@ -160,7 +168,8 @@ async def receive_vid(message):
 
     result_path = global_data.converter.create_and_run_pipe(
         f"in-{global_data.converter.counter}.mp4",
-        global_data.user_modes[user.id]
+        global_data.user_modes[user.id],
+        transparent=global_data.user_transparent[user.id]
     )
 
     if global_data.logger is not None:

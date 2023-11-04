@@ -29,8 +29,8 @@ class Converter:
         self.clear_folder(self.buf_f)
         self.clear_folder(self.out_f)
     
-    def create_and_run_pipe(self, filename, mode = None):
-        pipeline = ProcessPipeline(filename, self.counter, self.in_f, self.buf_f, self.out_f)
+    def create_and_run_pipe(self, filename, mode=None, transparent=True):
+        pipeline = ProcessPipeline(filename, self.counter, self.in_f, self.buf_f, self.out_f, transparent)
         if mode is not None:
             pipeline.set_pipe_mode(mode)
         pipeline.setup_pipe()
@@ -45,12 +45,13 @@ class Converter:
             os.remove(os_path(f"{folder}/{file}"))
     
 class ProcessPipeline:
-    def __init__(self, filename, index, in_f="", buf_f="", out_f="") -> None:
+    def __init__(self, filename, index, in_f="", buf_f="", out_f="", transparent=True) -> None:
         self.filename = filename
         self.index = index
         self.in_f = in_f
         self.buf_f = buf_f
         self.out_f = out_f
+        self.transparent = transparent
         self.pipe = []
         self.mode = PipeModes.Crop
         self.step = 0
@@ -59,9 +60,11 @@ class ProcessPipeline:
         self.mode = mode
     
     def setup_pipe(self):
+        # get the video metadata
         v_length = float(run_command(video_length(self.last_filename())).replace("\n", "")) # video length in seconds
         v_res = get_resolution_from_str(run_command(video_resolution(self.last_filename()))) # video resolution
-
+        
+        # then, based on the user choice, create a pipeline
         match self.mode:
             case PipeModes.Crop:
                 self.pipe += self.pipe_crop(v_length, v_res)
@@ -69,11 +72,12 @@ class ProcessPipeline:
                 self.pipe += self.pipe_crop_speedup(v_length, v_res)
             case PipeModes.Speedup:
                 self.pipe += self.pipe_speedup(v_length, v_res)
-        # then, based on the user choice, create a pipeline
+        
 
         self.pipe.append(mp4_to_webm(
             self.last_filename(),
-            f"{self.out_f}/{out_filename(self.index)}"
+            f"{self.out_f}/{out_filename(self.index)}",
+            self.transparent
         )) # convert and create a final file
     
     def run(self):

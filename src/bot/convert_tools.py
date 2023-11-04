@@ -18,7 +18,8 @@ def run_command(command: list[str], record_time = False) -> None:
     except subprocess.CalledProcessError as e:
         raise Exception("Exception during command execution: {}".format(e))
 
-def mp4_to_webm(input, output):
+def mp4_to_webm(input, output, transparent: bool = True):
+    transparent_exp = '-vf \"colorkey=0xffffff:0.1:0.0,format=yuva420p\" -auto-alt-ref 0' if transparent else ''
     return [
         "ffmpeg",
         "-i", input,
@@ -26,9 +27,10 @@ def mp4_to_webm(input, output):
         "libvpx-vp9",
         "-deadline", "realtime",
         "-cpu-used", "6",
-        "-b:v 384k",
+        "-b:v 384K",
         "-c:a",
         "libopus",
+        transparent_exp,
         "-an",
         output
     ]
@@ -69,7 +71,8 @@ def video_resolution(input):
         input
     ]
 
-def resize_video(input, output, scale: list[int]):
+def resize_video(input, output, scale: list[int], transparent: bool = True):
+    
     return [
         "ffmpeg",
         "-i", input,
