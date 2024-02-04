@@ -1,13 +1,13 @@
 from collections import defaultdict
 from telebot.async_telebot import AsyncTeleBot
-from src.bot.converter import Converter, PipeModes
+from src.bot.converter import Converter, PipeModes, BackgroundColors, SimilarityLevels
 import asyncio
 import os
 from time import time
 from src.bot.image_converter import process_image_document
 from src.bot.database import Database
 from src.bot.queries import *
-from config import ADMIN, FILE_SIZE_LIMIT, HELP_MESSAGE, SUPPORTED_FORMATS, TOKEN, UPDATE_INTERVAL, SAVE_FILES
+from config import ADMIN, FILE_SIZE_LIMIT, HELP_MESSAGE, SUPPORTED_FORMATS, TOKEN, UPDATE_INTERVAL, SAVE_FILES, BG_HELP_MESSAGE
 from src.bot.logger import Logger
 from src.bot.util import os_path, first_nonnone
 
@@ -23,12 +23,24 @@ class GlobalData:
         self.running = True
         self.converter = Converter(in_f, buf_f, out_f)
         self.user_modes = defaultdict(lambda: PipeModes.Crop)
+        self.user_similarity = defaultdict(lambda: "0")
+        self.user_colors = defaultdict(lambda: BackgroundColors.White)
         self.user_transparent = defaultdict(lambda: False)
 
     def set_user_mode(self, uid: str | int, mode: int) -> None:
         if not mode in PipeModes.modes_list:
             raise ValueError("Mode is not on the list")
         self.user_modes[uid] = mode
+    
+    def set_user_color(self, uid: str | int, color: str) -> None:
+        if not color in BackgroundColors.color_values_image.keys():
+            raise ValueError("Color is not on the list")
+        self.user_colors[uid] = color
+    
+    def set_user_similarity(self, uid: str | int, similarity: str) -> None:
+        if not similarity in SimilarityLevels.image.keys():
+            raise ValueError("Similarity is not on the list")
+        self.user_similarity[uid] = similarity
     
     def process_video(self, uid, filename):
 
@@ -50,12 +62,63 @@ async def stop(message):
     if str(message.from_user.id) == ADMIN:
         ...
 
+
 @bot.message_handler(commands=["bg"])
 async def toggle_background(message):
     global global_data
     uid = message.from_user.id
     global_data.user_transparent[uid] = not global_data.user_transparent[uid]
     await bot.send_message(uid, "Toggled background removal to " + ("ON" if global_data.user_transparent[uid] else "OFF"))
+
+
+@bot.message_handler(commands=["bghelp"])
+async def help(message):
+    await bot.send_message(
+        message.from_user.id,
+        BG_HELP_MESSAGE
+    )
+
+
+@bot.message_handler(commands=["bgc"])
+async def set_background_color(message):
+    global global_data
+    args = message.text.split(" ")
+    if len(args) != 2:
+        await bot.send_message(message.from_user.id, "Invalid argument supplied")
+        return
+    if args[1] not in BackgroundColors.color_values_image.keys():
+        await bot.send_message(message.from_user.id, "Invalid argument supplied")
+        return
+
+    changed_color = args[1]
+
+    if global_data.logger is not None:
+        global_data.logger.log("change_color", message.from_user.username, changed_color)
+    
+    global_data.set_user_color(message.from_user.id, changed_color)
+
+    await bot.send_message(message.from_user.id, f"Changed background removal color to {BackgroundColors.color_names[changed_color]}!")
+
+
+@bot.message_handler(commands=["bgs"])
+async def set_background_color(message):
+    global global_data
+    args = message.text.split(" ")
+    if len(args) != 2:
+        await bot.send_message(message.from_user.id, "Invalid argument supplied")
+        return
+    if args[1] not in SimilarityLevels.image.keys():
+        await bot.send_message(message.from_user.id, "Invalid argument supplied")
+        return
+    
+    changed_similarity = args[1]
+
+    if global_data.logger is not None:
+        global_data.logger.log("change_similarity", message.from_user.username, changed_similarity)
+
+    global_data.set_user_similarity(message.from_user.id, changed_similarity)
+
+    await bot.send_message(message.from_user.id, f"Changed background removal similarity to {changed_similarity}!")
 
 
 @bot.message_handler(commands=["cr"])
@@ -120,7 +183,12 @@ async def receive_photo(message):
     if global_data.logger is not None:
         timestamp = time()
 
-    result_io = process_image_document(downloaded_file, global_data.user_transparent[user.id])
+    result_io = process_image_document(
+        downloaded_file,
+        global_data.user_transparent[user.id],
+        background_color=BackgroundColors.color_values_image[global_data.user_colors[user.id]],
+        similarity_level=SimilarityLevels.image[global_data.user_similarity[user.id]]
+    )
 
     if global_data.logger is not None:
         global_data.logger.log(
@@ -169,7 +237,9 @@ async def receive_vid(message):
     result_path = global_data.converter.create_and_run_pipe(
         f"in-{global_data.converter.counter}.mp4",
         global_data.user_modes[user.id],
-        transparent=global_data.user_transparent[user.id]
+        transparent=global_data.user_transparent[user.id],
+        background_color=BackgroundColors.color_values_ffmpeg[global_data.user_colors[user.id]],
+        similarity_level=SimilarityLevels.ffmpeg[global_data.user_similarity[user.id]]
     )
 
     if global_data.logger is not None:

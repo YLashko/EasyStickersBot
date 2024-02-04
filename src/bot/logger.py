@@ -7,6 +7,8 @@ class Logger:
         "photo_convert": lambda telegram_nickname, photo_res, photo_size, time: f"a photo for @{telegram_nickname} with a resolution of {photo_res[0]}x{photo_res[1]} and a size of {round(photo_size / 1024, 4)}KB converted. time taken - {round(time, 4)}s",
         "error": lambda where, exception_content: f"an exception in {where} occured: {exception_content}",
         "request_submit": lambda telegram_nickname, request_type, info: f"a request for @{telegram_nickname} submitted, type: {request_type}, file info: {info}",
+        "change_color": lambda telegram_nickname, color: f"user {telegram_nickname} changed their background removal color to {color}",
+        "change_similarity": lambda telegram_nickname, similarity: f"user {telegram_nickname} changed their background removal similarity to {similarity}",
         "help": lambda telegram_nickname: f"@{telegram_nickname} asked for help or started using the bot",
         "change_mode": lambda telegram_nickname, mode: f"@{telegram_nickname} changed their mode to {mode}", 
     }

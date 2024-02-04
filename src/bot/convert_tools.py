@@ -18,8 +18,8 @@ def run_command(command: list[str], record_time = False) -> None:
     except subprocess.CalledProcessError as e:
         raise Exception("Exception during command execution: {}".format(e))
 
-def mp4_to_webm(input, output, transparent: bool = True):
-    transparent_exp = '-vf \"colorkey=0xffffff:0.1:0.0,format=yuva420p\" -auto-alt-ref 0' if transparent else ''
+def mp4_to_webm(input, output, transparent: bool = True, similarity_level: int = "10", transparent_color: str = "w"):
+    transparent_exp = f'-vf \"colorkey=0x{transparent_color}:0.{similarity_level}:0.1,format=yuva420p\" -auto-alt-ref 0' if transparent else ''
     return [
         "ffmpeg",
         "-i", input,
