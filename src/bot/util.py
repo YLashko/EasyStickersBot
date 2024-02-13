@@ -2,12 +2,11 @@ import os
 from pathlib import Path
 
 def get_desired_resolution(res):
-        max_res = max(res)
-        rate = 512 / max_res
-        x = int(res[0] * rate)
-        y = int(res[1] * rate)
-        x -= x % 2
-        y -= y % 2
+        x, y = res[0], res[1]
+        if x > y:
+            x, y = 512, int(y / x * 512)
+        else:
+            x, y = int(x / y * 512), 512
         return [x, y]
 
 def first_nonnone(iterable):
